@@ -1,2 +1,32 @@
+# Secrets / credentials
 .env
+.env.*
+!.env.example
+
+# Generated reports
 *.xlsx
+*.xls
+*.csv
+*.tsv
+*.gz
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+~$*
