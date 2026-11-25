@@ -45,13 +45,18 @@ def get_token():
 
 
 def sp(token, method, path, body=None):
-    r = requests.request(
-        method,
-        BASE + path,
-        headers={"x-amz-access-token": token, "Content-Type": "application/json"},
-        json=body,
-        timeout=60,
-    )
+    for wait in (5, 10, 20, 40, 60, None):  # back off and retry when rate limited (429)
+        r = requests.request(
+            method,
+            BASE + path,
+            headers={"x-amz-access-token": token, "Content-Type": "application/json"},
+            json=body,
+            timeout=60,
+        )
+        if r.status_code != 429 or wait is None:
+            break
+        print(f"rate limited, waiting {wait}s...")
+        time.sleep(wait)
     if not r.ok:
         raise RuntimeError(f"{r.status_code} {path}: {r.text}")
     return r.json()

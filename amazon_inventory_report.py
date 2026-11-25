@@ -25,14 +25,18 @@ REPORTS = {
     "fba": ("FBA", "GET_FBA_MYI_UNSUPPRESSED_INVENTORY_DATA"),
     "mfn": ("Listings", "GET_MERCHANT_LISTINGS_ALL_DATA"),
 }
-NUMERIC_HINTS = ("quantity", "price", "volume")
+NUMERIC_HINTS = ("quantity", "price", "volume", "amount", "cost")
 
 
-def fetch_report(token, report_type):
-    res = sp(token, "POST", "/reports/2021-06-30/reports", {
-        "reportType": report_type,
-        "marketplaceIds": [MARKETPLACE],
-    })
+def fetch_report(token, report_type, date_from=None, date_to=None, options=None):
+    body = {"reportType": report_type, "marketplaceIds": [MARKETPLACE]}
+    if options:
+        body["reportOptions"] = options
+    if date_from:
+        body["dataStartTime"] = f"{date_from}T00:00:00+05:30"
+    if date_to:
+        body["dataEndTime"] = f"{date_to}T23:59:59+05:30"
+    res = sp(token, "POST", "/reports/2021-06-30/reports", body)
     report_id = res["reportId"]
     print(f"[{report_type}] reportId: {report_id}")
 
@@ -46,7 +50,11 @@ def fetch_report(token, report_type):
             raise RuntimeError(f"{report_type} report {status}")
         time.sleep(15)
 
-    doc = sp(token, "GET", f"/reports/2021-06-30/documents/{report['reportDocumentId']}")
+    return download_document(token, report["reportDocumentId"])
+
+
+def download_document(token, document_id):
+    doc = sp(token, "GET", f"/reports/2021-06-30/documents/{document_id}")
     raw = requests.get(doc["url"], timeout=120).content
     if doc.get("compressionAlgorithm") == "GZIP":
         raw = gzip.decompress(raw)
